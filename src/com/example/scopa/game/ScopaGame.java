@@ -65,4 +65,12 @@ public class ScopaGame {
         }
         return sb.toString();
     }
+    public String playGame(Deck deck1, Table table1){
+        startNewRound();
+        for (int i=0; i<5; i++){
+            p1.giveCards();
+        }
+
+
+    }
 }
