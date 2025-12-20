@@ -65,4 +65,22 @@ public class ScopaGame {
         }
         return sb.toString();
     }
-}
+
+        public String playGame() {
+            startNewRound();
+
+            // Minimal "game loop" placeholder:
+            // whenever both players have no cards, deal 3 each (if possible).
+            while (!deck.isEmpty()) {
+                if (p1.getHand().isEmpty() && p2.getHand().isEmpty()) {
+                    p1.giveCards(deck.deal(3));
+                    p2.giveCards(deck.deal(3));
+                }
+
+                // TODO: implement turns: each player plays a card, apply captures using ScopaRules, etc.
+                break; // remove once turn logic is implemented
+            }
+
+            return "Game loop not implemented yet (dealing works, turns/captures still TODO).";
+        }
+    }
