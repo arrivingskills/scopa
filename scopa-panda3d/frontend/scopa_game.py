@@ -35,8 +35,14 @@ class ScopaGameFrontend(ShowBase):
         self.selected_capture_index = None
         self.available_captures = []
         self.card_models = {}  # Store loaded card models
-        self.rendered_cards = {"table": [], "p1": [], "p2": []}
-        self.lock = threading.Lock()        self.state_changed = False  # Flag to track if state needs re-rendering
+        self.lock = threading.Lock()
+        self.state_changed = False  # Flag to track if state needs re-rendering
+
+        # Card tracking for rendering - keep references to prevent garbage collection
+        self.table_cards = []
+        self.player1_cards = []
+        self.player2_cards = []
+
         # UI setup
         self.setup_ui()
 
@@ -101,6 +107,11 @@ class ScopaGameFrontend(ShowBase):
         # Update task
         self.taskMgr.add(self.update_task, "update_task")
 
+        # Setup keyboard controls for playing cards
+        self.accept("1", self.play_card, [0])
+        self.accept("2", self.play_card, [1])
+        self.accept("3", self.play_card, [2])
+
     def update_task(self, task):
         """Update UI from background threads."""
         with self.lock:
@@ -162,7 +173,9 @@ class ScopaGameFrontend(ShowBase):
                 self.available_captures = []
                 self.state_changed = True
             self.set_status("Game started!")
-            print(f"Game state received: table={len(response.get('table', []))}, p1 hand={len(response.get('player1', {}).get('hand', []))}")
+            print(
+                f"Game state received: table={len(response.get('table', []))}, p1 hand={len(response.get('player1', {}).get('hand', []))}"
+            )
         else:
             self.set_status("Failed to start game")
 
@@ -258,14 +271,20 @@ class ScopaGameFrontend(ShowBase):
             print("render_game_state: No game state to render")
             return
 
-        print(f"render_game_state: Rendering {len(self.game_state.get('table', []))} table cards")
+        print(
+            f"render_game_state: Rendering {len(self.game_state.get('table', []))} table cards"
+        )
 
-        # Clear previous cards
-        for card_list in self.rendered_cards.values():
-            for card_node in card_list:
-                card_node.removeNode()
-
-        self.rendered_cards = {"table": [], "p1": [], "p2": []}
+        # Clear old cards
+        for card in self.table_cards:
+            card.removeNode()
+        for card in self.player1_cards:
+            card.removeNode()
+        for card in self.player2_cards:
+            card.removeNode()
+        self.table_cards.clear()
+        self.player1_cards.clear()
+        self.player2_cards.clear()
 
         # Render table cards
         table_cards = self.game_state.get("table", [])
@@ -273,7 +292,7 @@ class ScopaGameFrontend(ShowBase):
             x = -3 + i * 1.5
             card_node = self.create_card_visual(card_data, (x, 0, 0))
             if card_node:
-                self.rendered_cards["table"].append(card_node)
+                self.table_cards.append(card_node)
 
         # Render player 1 hand (bottom)
         p1_data = self.game_state.get("player1", {})
@@ -285,7 +304,7 @@ class ScopaGameFrontend(ShowBase):
             x = -2 + i * 1.5
             card_node = self.create_card_visual(card_data, (x, 0, -3))
             if card_node:
-                self.rendered_cards["p1"].append(card_node)
+                self.player1_cards.append(card_node)
 
                 # Add click handler if it's player 1's turn
                 if is_p1_turn:
@@ -300,7 +319,7 @@ class ScopaGameFrontend(ShowBase):
             x = -2 + i * 1.5
             card_node = self.create_card_visual(card_data, (x, 0, 3))
             if card_node:
-                self.rendered_cards["p2"].append(card_node)
+                self.player2_cards.append(card_node)
 
                 # Add click handler if it's player 2's turn
                 if is_p2_turn:
@@ -312,8 +331,10 @@ class ScopaGameFrontend(ShowBase):
         suit = card_data.get("suit", "").lower()
         rank_name = card_data.get("rank", "").lower()
         value = card_data.get("value", 0)
-        
-        print(f"create_card_visual: Creating card - suit={suit}, rank={rank_name}, value={value}")
+
+        print(
+            f"create_card_visual: Creating card - suit={suit}, rank={rank_name}, value={value}"
+        )
 
         # Map rank names to file names
         rank_map = {
@@ -333,7 +354,7 @@ class ScopaGameFrontend(ShowBase):
         card_name = f"{rank_file}_{suit}"
         # Use correct relative path from frontend directory
         card_path = f"assets/cards/{card_name}.egg"
-        
+
         print(f"create_card_visual: Trying to load {card_path}")
 
         try:
@@ -357,10 +378,11 @@ class ScopaGameFrontend(ShowBase):
             # If models/box doesn't exist, create a simple card plane
             print("create_card_visual: models/box not found, creating simple geometry")
             from panda3d.core import CardMaker
+
             cm = CardMaker("card")
             cm.setFrame(-0.5, 0.5, -0.7, 0.7)
             card_node = self.render.attachNewNode(cm.generate())
-        
+
         card_node.reparentTo(self.render)
         card_node.setPos(*position)
         card_node.setScale(0.5, 0.01, 0.7)
@@ -419,11 +441,6 @@ class ScopaGameFrontend(ShowBase):
         info.append("(Player 1 = bottom, Player 2 = top)")
 
         self.info_text.setText("\n".join(info))
-
-        # Setup keyboard controls
-        self.accept("1", self.play_card, [0])
-        self.accept("2", self.play_card, [1])
-        self.accept("3", self.play_card, [2])
 
     def set_status(self, text):
         """Update status text."""
