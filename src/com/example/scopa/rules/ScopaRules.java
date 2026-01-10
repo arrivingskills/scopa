@@ -63,6 +63,180 @@ public final class ScopaRules {
     }
 
     /**
+     * Calculate scores for a round based on Scopa scoring rules.
+     * 
+     * Scoring categories:
+     * - Cards (Carte): 1 point for the player with most cards captured
+     * - Coins (Denari): 1 point for the player with most coin suit cards
+     * - Sette Bello: 1 point for capturing the 7 of Coins
+     * - Primiera: 1 point for the best primiera (specific point calculation per suit)
+     * - Scopa: 1 point for each scopa (clearing the table)
+     */
+    public static Score scoreRound(List<Card> p1Captured, int p1Scopas,
+                                    List<Card> p2Captured, int p2Scopas) {
+        int p1Points = 0;
+        int p2Points = 0;
+
+        // 1. Most cards (ties don't award points)
+        if (p1Captured.size() > p2Captured.size()) {
+            p1Points++;
+        } else if (p2Captured.size() > p1Captured.size()) {
+            p2Points++;
+        }
+
+        // 2. Most coins
+        int p1Coins = countCoins(p1Captured);
+        int p2Coins = countCoins(p2Captured);
+        if (p1Coins > p2Coins) {
+            p1Points++;
+        } else if (p2Coins > p1Coins) {
+            p2Points++;
+        }
+
+        // 3. Sette Bello (7 of Coins)
+        if (hasSetteBello(p1Captured)) {
+            p1Points++;
+        } else if (hasSetteBello(p2Captured)) {
+            p2Points++;
+        }
+
+        // 4. Primiera
+        int primieraResult = calculatePrimiera(p1Captured, p2Captured);
+        if (primieraResult > 0) {
+            p1Points++;
+        } else if (primieraResult < 0) {
+            p2Points++;
+        }
+
+        // 5. Scopas
+        p1Points += p1Scopas;
+        p2Points += p2Scopas;
+
+        return new Score(p1Points, p2Points);
+    }
+
+    private static int countCoins(List<Card> cards) {
+        int count = 0;
+        for (Card c : cards) {
+            if (c.getSuit().getDisplayName().equals("Coins")) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static boolean hasSetteBello(List<Card> cards) {
+        for (Card c : cards) {
+            if (c.getSuit().getDisplayName().equals("Coins") && c.value() == 7) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Calculate primiera for both players.
+     * Returns > 0 if player 1 wins, < 0 if player 2 wins, 0 for tie or if either lacks all suits.
+     * 
+     * Primiera points per card (by rank):
+     * 7 = 21, 6 = 18, Ace = 16, 5 = 15, 4 = 14, 3 = 13, 2 = 12, face cards = 10
+     */
+    private static int calculatePrimiera(List<Card> p1Cards, List<Card> p2Cards) {
+        Integer p1Score = getPrimieraScore(p1Cards);
+        Integer p2Score = getPrimieraScore(p2Cards);
+
+        // If either player doesn't have all four suits, no one gets the primiera point
+        if (p1Score == null || p2Score == null) {
+            return 0;
+        }
+
+        return Integer.compare(p1Score, p2Score);
+    }
+
+    private static Integer getPrimieraScore(List<Card> cards) {
+        // Find best card in each suit
+        Integer coinsScore = null;
+        Integer cupsScore = null;
+        Integer swordsScore = null;
+        Integer clubsScore = null;
+
+        for (Card c : cards) {
+            int cardPrimiera = getPrimieraValue(c);
+            String suit = c.getSuit().getDisplayName();
+
+            switch (suit) {
+                case "Coins":
+                    if (coinsScore == null || cardPrimiera > coinsScore) {
+                        coinsScore = cardPrimiera;
+                    }
+                    break;
+                case "Cups":
+                    if (cupsScore == null || cardPrimiera > cupsScore) {
+                        cupsScore = cardPrimiera;
+                    }
+                    break;
+                case "Swords":
+                    if (swordsScore == null || cardPrimiera > swordsScore) {
+                        swordsScore = cardPrimiera;
+                    }
+                    break;
+                case "Clubs":
+                    if (clubsScore == null || cardPrimiera > clubsScore) {
+                        clubsScore = cardPrimiera;
+                    }
+                    break;
+            }
+        }
+
+        // Must have at least one card from each suit
+        if (coinsScore == null || cupsScore == null || swordsScore == null || clubsScore == null) {
+            return null;
+        }
+
+        return coinsScore + cupsScore + swordsScore + clubsScore;
+    }
+
+    private static int getPrimieraValue(Card card) {
+        int rank = card.value();
+        switch (rank) {
+            case 7: return 21;
+            case 6: return 18;
+            case 1: return 16;  // Ace
+            case 5: return 15;
+            case 4: return 14;
+            case 3: return 13;
+            case 2: return 12;
+            default: return 10;  // Jack (8), Knight (9), King (10)
+        }
+    }
+
+    /**
+     * Simple Score holder class.
+     */
+    public static class Score {
+        private final int player1Points;
+        private final int player2Points;
+
+        public Score(int player1Points, int player2Points) {
+            this.player1Points = player1Points;
+            this.player2Points = player2Points;
+        }
+
+        public int getPlayer1Points() {
+            return player1Points;
+        }
+
+        public int getPlayer2Points() {
+            return player2Points;
+        }
+
+        @Override
+        public String toString() {
+            return "Player 1: " + player1Points + " points, Player 2: " + player2Points + " points";
+        }
+    }
+
+    /**
      * Placeholder for scoring at the end of a round.
      *
      * Common scoring categories in Scopa:

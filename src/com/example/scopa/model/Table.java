@@ -28,6 +28,14 @@ public class Table {
         onTable.remove(card);
     }
 
+    public void removeFromTable(List<Card> cards) {
+        onTable.removeAll(cards);
+    }
+
+    public boolean isEmpty() {
+        return onTable.isEmpty();
+    }
+
     public void logEvent(String event) {
         events.add(event);
     }
