@@ -36,8 +36,7 @@ class ScopaGameFrontend(ShowBase):
         self.available_captures = []
         self.card_models = {}  # Store loaded card models
         self.rendered_cards = {"table": [], "p1": [], "p2": []}
-        self.lock = threading.Lock()
-
+        self.lock = threading.Lock()        self.state_changed = False  # Flag to track if state needs re-rendering
         # UI setup
         self.setup_ui()
 
@@ -105,9 +104,10 @@ class ScopaGameFrontend(ShowBase):
     def update_task(self, task):
         """Update UI from background threads."""
         with self.lock:
-            if self.game_state:
+            if self.game_state and self.state_changed:
                 self.render_game_state()
                 self.update_info_text()
+                self.state_changed = False
         return task.cont
 
     def connect_backend(self):
@@ -160,7 +160,9 @@ class ScopaGameFrontend(ShowBase):
                 self.selected_hand_index = None
                 self.selected_capture_index = None
                 self.available_captures = []
+                self.state_changed = True
             self.set_status("Game started!")
+            print(f"Game state received: table={len(response.get('table', []))}, p1 hand={len(response.get('player1', {}).get('hand', []))}")
         else:
             self.set_status("Failed to start game")
 
@@ -173,6 +175,7 @@ class ScopaGameFrontend(ShowBase):
         if response and response.get("status") == "ok":
             with self.lock:
                 self.game_state = response
+                self.state_changed = True
             self.set_status("State refreshed")
         else:
             self.set_status("Failed to refresh state")
@@ -216,6 +219,7 @@ class ScopaGameFrontend(ShowBase):
                 self.selected_hand_index = None
                 self.selected_capture_index = None
                 self.available_captures = []
+                self.state_changed = True
             self.set_status("Card played successfully")
         else:
             self.set_status("Failed to play card")
@@ -229,6 +233,7 @@ class ScopaGameFrontend(ShowBase):
         if response and response.get("status") == "ok":
             with self.lock:
                 self.game_state = response
+                self.state_changed = True
             self.set_status("Round finalized")
         else:
             msg = response.get("message", "Failed") if response else "Failed"
@@ -250,7 +255,10 @@ class ScopaGameFrontend(ShowBase):
     def render_game_state(self):
         """Render the current game state."""
         if not self.game_state:
+            print("render_game_state: No game state to render")
             return
+
+        print(f"render_game_state: Rendering {len(self.game_state.get('table', []))} table cards")
 
         # Clear previous cards
         for card_list in self.rendered_cards.values():
@@ -264,7 +272,8 @@ class ScopaGameFrontend(ShowBase):
         for i, card_data in enumerate(table_cards):
             x = -3 + i * 1.5
             card_node = self.create_card_visual(card_data, (x, 0, 0))
-            self.rendered_cards["table"].append(card_node)
+            if card_node:
+                self.rendered_cards["table"].append(card_node)
 
         # Render player 1 hand (bottom)
         p1_data = self.game_state.get("player1", {})
@@ -275,11 +284,12 @@ class ScopaGameFrontend(ShowBase):
         for i, card_data in enumerate(p1_hand):
             x = -2 + i * 1.5
             card_node = self.create_card_visual(card_data, (x, 0, -3))
-            self.rendered_cards["p1"].append(card_node)
+            if card_node:
+                self.rendered_cards["p1"].append(card_node)
 
-            # Add click handler if it's player 1's turn
-            if is_p1_turn:
-                self.add_card_click_handler(card_node, i)
+                # Add click handler if it's player 1's turn
+                if is_p1_turn:
+                    self.add_card_click_handler(card_node, i)
 
         # Render player 2 hand (top)
         p2_data = self.game_state.get("player2", {})
@@ -289,11 +299,12 @@ class ScopaGameFrontend(ShowBase):
         for i, card_data in enumerate(p2_hand):
             x = -2 + i * 1.5
             card_node = self.create_card_visual(card_data, (x, 0, 3))
-            self.rendered_cards["p2"].append(card_node)
+            if card_node:
+                self.rendered_cards["p2"].append(card_node)
 
-            # Add click handler if it's player 2's turn
-            if is_p2_turn:
-                self.add_card_click_handler(card_node, i)
+                # Add click handler if it's player 2's turn
+                if is_p2_turn:
+                    self.add_card_click_handler(card_node, i)
 
     def create_card_visual(self, card_data, position):
         """Create a visual representation of a card."""
@@ -301,6 +312,8 @@ class ScopaGameFrontend(ShowBase):
         suit = card_data.get("suit", "").lower()
         rank_name = card_data.get("rank", "").lower()
         value = card_data.get("value", 0)
+        
+        print(f"create_card_visual: Creating card - suit={suit}, rank={rank_name}, value={value}")
 
         # Map rank names to file names
         rank_map = {
@@ -318,20 +331,36 @@ class ScopaGameFrontend(ShowBase):
 
         rank_file = rank_map.get(rank_name, str(value))
         card_name = f"{rank_file}_{suit}"
-        card_path = f"scopa-panda3d/frontend/assets/cards/{card_name}.egg"
+        # Use correct relative path from frontend directory
+        card_path = f"assets/cards/{card_name}.egg"
+        
+        print(f"create_card_visual: Trying to load {card_path}")
 
         try:
             card_node = self.loader.loadModel(card_path)
-            if card_node:
+            if card_node and not card_node.isEmpty():
                 card_node.reparentTo(self.render)
                 card_node.setPos(*position)
                 card_node.setScale(0.3)
+                print(f"create_card_visual: Successfully loaded {card_path}")
                 return card_node
+            else:
+                print(f"Card model loaded but empty: {card_path}")
         except Exception as e:
             print(f"Failed to load card model {card_path}: {e}")
 
         # Fallback: create a simple colored box
-        card_node = self.loader.loadModel("models/box")
+        print(f"create_card_visual: Using fallback box for {card_name}")
+        try:
+            card_node = self.loader.loadModel("models/box")
+        except:
+            # If models/box doesn't exist, create a simple card plane
+            print("create_card_visual: models/box not found, creating simple geometry")
+            from panda3d.core import CardMaker
+            cm = CardMaker("card")
+            cm.setFrame(-0.5, 0.5, -0.7, 0.7)
+            card_node = self.render.attachNewNode(cm.generate())
+        
         card_node.reparentTo(self.render)
         card_node.setPos(*position)
         card_node.setScale(0.5, 0.01, 0.7)

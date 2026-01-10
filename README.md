@@ -94,6 +94,50 @@ source venv/bin/activate  # If not already activated
 python scopa_game.py
 ```
 
+**Troubleshooting:**
+
+If the frontend doesn't display cards or the game doesn't start:
+
+1. **Check the backend is running:**
+
+   ```bash
+   # In another terminal
+   ps aux | grep GameServer
+   # Or test with:
+   telnet localhost 5000
+   ```
+
+2. **Run in debug mode:**
+
+   ```bash
+   cd scopa-panda3d/frontend
+   python scopa_game_debug.py
+   ```
+
+   This will show detailed output about card loading and server communication.
+
+3. **Verify the working directory:**
+
+   ```bash
+   # Must run from the frontend directory
+   cd scopa-panda3d/frontend
+   ls assets/cards/  # Should show .egg files
+   python scopa_game.py
+   ```
+
+4. **Check Python version:**
+
+   ```bash
+   python3 --version  # Should be 3.8 or higher
+   ```
+
+5. **Reinstall Panda3D:**
+
+   ```bash
+   pip uninstall panda3d
+   pip install panda3d
+   ```
+
 ## How to Play
 
 1. Click **"Start Game"** to begin a new round
