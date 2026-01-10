@@ -1,43 +1,142 @@
-# Scopa Panda3D Example
+# Scopa Panda3D - Complete Game
 
-Minimal example showing a Python Panda3D frontend communicating with a simple Java backend over TCP. This is a starting point to build a GUI that talks to a Java Scopa engine.
+Complete Scopa card game with Java backend and Panda3D frontend.
 
-Files:
+## Quick Start
 
-- Backend: [scopa-panda3d/backend/JavaBackend.java](scopa-panda3d/backend/JavaBackend.java)
-- Frontend: [scopa-panda3d/frontend/main.py](scopa-panda3d/frontend/main.py)
-- Frontend requirements: [scopa-panda3d/frontend/requirements.txt](scopa-panda3d/frontend/requirements.txt)
+### Option 1: Using Scripts (Recommended)
 
-Quick start
-
-1) Build and run the Java backend
-
+**Terminal 1 - Start Backend:**
 ```bash
-cd scopa-panda3d/backend
-javac JavaBackend.java
-java JavaBackend
+cd scopa
+./run_server.sh
 ```
 
-The backend listens on port 5000 and accepts simple newline-terminated commands like `HELLO`, `START`, `PLAY <something>`, and `QUIT`.
+**Terminal 2 - Start Frontend:**
+```bash
+cd scopa-panda3d/frontend
+./run_frontend.sh
+```
 
-2) Run the Panda3D frontend
+### Option 2: Manual Setup
+
+**1) Build and run the Java backend**
+
+```bash
+cd scopa
+mvn clean compile
+mvn exec:java -Dexec.mainClass="com.example.scopa.server.GameServer"
+```
+
+The GameServer listens on port 5000 and accepts JSON commands.
+
+**2) Run the Panda3D frontend**
 
 Install Panda3D (preferably in a virtualenv):
 
 ```bash
+cd scopa-panda3d/frontend
 python3 -m venv venv
 source venv/bin/activate
-pip install -r ../frontend/requirements.txt
-python ../frontend/main.py
+pip install -r requirements.txt
+python scopa_game.py
 ```
 
-Usage
+## Game Files
 
-- Click `Ping Backend` to send `HELLO` and show the backend response.
-- Click `Start` to send `START`.
-- Click `Play Random` to send a sample `PLAY CARD1` command.
+- **Backend Server**: [src/com/example/scopa/server/GameServer.java](../../src/com/example/scopa/server/GameServer.java)
+- **Complete Frontend**: [frontend/scopa_game.py](frontend/scopa_game.py)
+- **Simple Example Frontend**: [frontend/main.py](frontend/main.py)
+- **Simple Example Backend**: [backend/JavaBackend.java](backend/JavaBackend.java)
 
-Notes
+## How to Play
 
-- This example is intentionally small and meant to be extended. It doesn't implement Scopa rules or use the existing Java scopa code in the repository.
-- For production or richer interactions consider using JSON over TCP, WebSockets, or an HTTP API (e.g., SparkJava) for clearer protocols and easier debugging.
+1. **Start Game**: Click the "Start Game" button
+2. **Play Cards**: Use number keys 1-3 to play cards from your hand
+   - Bottom row = Player 1's hand
+   - Top row = Player 2's hand
+   - Middle = Table cards
+3. **Captures**: The game automatically selects captures based on Scopa rules
+4. **Finalize**: Click "Finalize Round" when all cards are played
+5. **Score**: Click "Show Score" to see the results
+
+## Protocol
+
+The GameServer uses a JSON-based protocol over TCP:
+
+### Commands
+- `START` - Start a new game, returns game state
+- `STATE` - Get current game state
+- `PLAY <handIndex> <captureIndex>` - Play a card from hand
+- `CAPTURES <handIndex>` - Get possible captures for a card
+- `FINALIZE` - Finalize the round
+- `SCORE` - Get current score
+- `HELLO` - Test connection
+- `QUIT` - Disconnect
+
+### Example Session
+```
+Client: START
+Server: {"status":"ok","table":[...],"player1":{...},"player2":{...},...}
+
+Client: CAPTURES 0
+Server: {"status":"ok","captures":[[card1,card2],...]}
+
+Client: PLAY 0 0
+Server: {"status":"ok","table":[...],...}
+
+Client: SCORE
+Server: {"status":"ok","player1Score":5,"player2Score":3}
+```
+
+## Features
+
+### Backend (Java)
+- Complete Scopa game engine
+- Capture logic with exact-match precedence
+- Sum-based capture using backtracking algorithm
+- Full scoring system (cards, coins, sette bello, primiera, scopas)
+- Multi-threaded client handling
+- JSON protocol
+
+### Frontend (Python/Panda3D)
+- 3D card rendering
+- Interactive gameplay
+- Real-time state updates
+- Keyboard controls
+- Status and score display
+- Asynchronous communication
+
+## Architecture
+
+```
+┌─────────────────────┐         TCP/JSON        ┌─────────────────────┐
+│  Panda3D Frontend   │◄─────────────────────────►│   Java GameServer   │
+│   (scopa_game.py)   │      Port 5000           │   (GameServer.java) │
+│                     │                          │                     │
+│  - 3D Rendering     │                          │  - Game Logic       │
+│  - User Input       │                          │  - Rules Engine     │
+│  - State Display    │                          │  - Scoring          │
+└─────────────────────┘                          └─────────────────────┘
+                                                           │
+                                                           │
+                                                  ┌────────▼────────┐
+                                                  │   Scopa Core    │
+                                                  │  - Model        │
+                                                  │  - Rules        │
+                                                  │  - Game         │
+                                                  └─────────────────┘
+```
+
+## Development Notes
+
+- The backend is fully tested with JUnit (see test-reports in target/)
+- Card assets are 3D models in .egg format
+- Frontend falls back to colored boxes if card models aren't found
+- Multi-client support: each connection gets its own game instance
+
+## Legacy Files
+
+- `main.py` - Simple example frontend (ping/pong demo)
+- `backend/JavaBackend.java` - Simple example backend
+- These were the original starting point, kept for reference

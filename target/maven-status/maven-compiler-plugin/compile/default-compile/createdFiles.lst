@@ -1,10 +1,13 @@
-com/example/scopa/player/HumanPlayer.class
 com/example/scopa/Main.class
+com/example/scopa/server/GameServer.class
 com/example/scopa/model/Table.class
+com/example/scopa/model/Suit.class
+com/example/scopa/server/GameServer$GameHandler.class
+com/example/scopa/model/Card.class
+com/example/scopa/player/HumanPlayer.class
 com/example/scopa/rules/ScopaRules.class
+com/example/scopa/rules/ScopaRules$Score.class
 com/example/scopa/game/ScopaGame.class
 com/example/scopa/model/Deck.class
-com/example/scopa/model/Suit.class
 com/example/scopa/model/Rank.class
-com/example/scopa/model/Card.class
 com/example/scopa/player/Player.class

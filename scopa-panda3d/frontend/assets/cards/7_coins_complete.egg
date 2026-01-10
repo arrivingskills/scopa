@@ -1,0 +1,149 @@
+<Comment> { "Complete 7 of Coins card with front and back faces" }
+
+<Texture> card_front_texture {
+  "assets/textures/7_coins_front.png"
+  <Scalar> format { rgba }
+  <Scalar> wrap { clamp }
+}
+
+<Texture> card_back_texture {
+  "assets/textures/card_back.png"
+  <Scalar> format { rgba }
+  <Scalar> wrap { clamp }
+}
+
+<Material> card_material {
+  <Scalar> diffuse { 1.0 1.0 1.0 1.0 }
+  <Scalar> ambient { 0.3 0.3 0.3 1.0 }
+  <Scalar> specular { 0.2 0.2 0.2 1.0 }
+  <Scalar> shininess { 15.0 }
+}
+
+<Group> card_7_coins_complete {
+  <Transform> {
+    <Matrix4> {
+      1.0 0.0 0.0 0.0
+      0.0 1.0 0.0 0.0
+      0.0 0.0 1.0 0.0
+      0.0 0.0 0.0 1.0
+    }
+  }
+
+  <Comment> { "Card dimensions: standard playing card ratio (2.5:3.5)" }
+  <Scalar> card_width { 1.0 }
+  <Scalar> card_height { 1.4 }
+  <Scalar> card_thickness { 0.02 }
+
+  <VertexPool> front_vertices {
+    <Comment> { "Front face vertices" }
+    <Vertex> 0 {
+      -0.5 0.01 -0.7
+      <UV> { 0.0 1.0 }
+      <Normal> { 0.0 1.0 0.0 }
+    }
+    <Vertex> 1 {
+      0.5 0.01 -0.7
+      <UV> { 1.0 1.0 }
+      <Normal> { 0.0 1.0 0.0 }
+    }
+    <Vertex> 2 {
+      0.5 0.01 0.7
+      <UV> { 1.0 0.0 }
+      <Normal> { 0.0 1.0 0.0 }
+    }
+    <Vertex> 3 {
+      -0.5 0.01 0.7
+      <UV> { 0.0 0.0 }
+      <Normal> { 0.0 1.0 0.0 }
+    }
+  }
+
+  <VertexPool> back_vertices {
+    <Comment> { "Back face vertices" }
+    <Vertex> 0 {
+      -0.5 -0.01 -0.7
+      <UV> { 1.0 1.0 }
+      <Normal> { 0.0 -1.0 0.0 }
+    }
+    <Vertex> 1 {
+      0.5 -0.01 -0.7
+      <UV> { 0.0 1.0 }
+      <Normal> { 0.0 -1.0 0.0 }
+    }
+    <Vertex> 2 {
+      0.5 -0.01 0.7
+      <UV> { 0.0 0.0 }
+      <Normal> { 0.0 -1.0 0.0 }
+    }
+    <Vertex> 3 {
+      -0.5 -0.01 0.7
+      <UV> { 1.0 0.0 }
+      <Normal> { 0.0 -1.0 0.0 }
+    }
+  }
+
+  <VertexPool> edge_vertices {
+    <Comment> { "Edge vertices for card thickness" }
+    <Vertex> 0 { -0.5 -0.01 -0.7 <Normal> { -1.0 0.0 0.0 } }
+    <Vertex> 1 { -0.5 0.01 -0.7 <Normal> { -1.0 0.0 0.0 } }
+    <Vertex> 2 { -0.5 0.01 0.7 <Normal> { -1.0 0.0 0.0 } }
+    <Vertex> 3 { -0.5 -0.01 0.7 <Normal> { -1.0 0.0 0.0 } }
+    
+    <Vertex> 4 { 0.5 -0.01 -0.7 <Normal> { 1.0 0.0 0.0 } }
+    <Vertex> 5 { 0.5 0.01 -0.7 <Normal> { 1.0 0.0 0.0 } }
+    <Vertex> 6 { 0.5 0.01 0.7 <Normal> { 1.0 0.0 0.0 } }
+    <Vertex> 7 { 0.5 -0.01 0.7 <Normal> { 1.0 0.0 0.0 } }
+    
+    <Vertex> 8 { -0.5 -0.01 -0.7 <Normal> { 0.0 0.0 -1.0 } }
+    <Vertex> 9 { 0.5 -0.01 -0.7 <Normal> { 0.0 0.0 -1.0 } }
+    <Vertex> 10 { 0.5 0.01 -0.7 <Normal> { 0.0 0.0 -1.0 } }
+    <Vertex> 11 { -0.5 0.01 -0.7 <Normal> { 0.0 0.0 -1.0 } }
+    
+    <Vertex> 12 { -0.5 -0.01 0.7 <Normal> { 0.0 0.0 1.0 } }
+    <Vertex> 13 { 0.5 -0.01 0.7 <Normal> { 0.0 0.0 1.0 } }
+    <Vertex> 14 { 0.5 0.01 0.7 <Normal> { 0.0 0.0 1.0 } }
+    <Vertex> 15 { -0.5 0.01 0.7 <Normal> { 0.0 0.0 1.0 } }
+  }
+
+  <Group> front_face {
+    <Polygon> {
+      <TRef> { card_front_texture }
+      <MRef> { card_material }
+      <VertexRef> { 0 1 2 3 <Ref> { front_vertices } }
+    }
+  }
+
+  <Group> back_face {
+    <Polygon> {
+      <TRef> { card_back_texture }
+      <MRef> { card_material }
+      <VertexRef> { 0 1 2 3 <Ref> { back_vertices } }
+    }
+  }
+
+  <Group> edges {
+    <Comment> { "Left edge" }
+    <Polygon> {
+      <MRef> { card_material }
+      <VertexRef> { 0 1 2 3 <Ref> { edge_vertices } }
+    }
+    
+    <Comment> { "Right edge" }
+    <Polygon> {
+      <MRef> { card_material }
+      <VertexRef> { 4 7 6 5 <Ref> { edge_vertices } }
+    }
+    
+    <Comment> { "Bottom edge" }
+    <Polygon> {
+      <MRef> { card_material }
+      <VertexRef> { 8 11 10 9 <Ref> { edge_vertices } }
+    }
+    
+    <Comment> { "Top edge" }
+    <Polygon> {
+      <MRef> { card_material }
+      <VertexRef> { 12 13 14 15 <Ref> { edge_vertices } }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+<Comment> { "Simple working 7 of Coins card" }
+
+<Texture> card_front_texture {
+  "assets/textures/7_coins_front.png"
+}
+
+<Texture> card_back_texture {
+  "assets/textures/card_back.png"
+}
+
+<Group> card_7_coins {
+  <VertexPool> front_vertices {
+    <Vertex> 0 {
+      -0.5 0.01 -0.7
+      <UV> { 0.0 1.0 }
+      <Normal> { 0.0 1.0 0.0 }
+    }
+    <Vertex> 1 {
+      0.5 0.01 -0.7
+      <UV> { 1.0 1.0 }
+      <Normal> { 0.0 1.0 0.0 }
+    }
+    <Vertex> 2 {
+      0.5 0.01 0.7
+      <UV> { 1.0 0.0 }
+      <Normal> { 0.0 1.0 0.0 }
+    }
+    <Vertex> 3 {
+      -0.5 0.01 0.7
+      <UV> { 0.0 0.0 }
+      <Normal> { 0.0 1.0 0.0 }
+    }
+  }
+
+  <VertexPool> back_vertices {
+    <Vertex> 0 {
+      -0.5 -0.01 -0.7
+      <UV> { 1.0 1.0 }
+      <Normal> { 0.0 -1.0 0.0 }
+    }
+    <Vertex> 1 {
+      0.5 -0.01 -0.7
+      <UV> { 0.0 1.0 }
+      <Normal> { 0.0 -1.0 0.0 }
+    }
+    <Vertex> 2 {
+      0.5 -0.01 0.7
+      <UV> { 0.0 0.0 }
+      <Normal> { 0.0 -1.0 0.0 }
+    }
+    <Vertex> 3 {
+      -0.5 -0.01 0.7
+      <UV> { 1.0 0.0 }
+      <Normal> { 0.0 -1.0 0.0 }
+    }
+  }
+
+  <Group> front_face {
+    <Polygon> {
+      <TRef> { card_front_texture }
+      <VertexRef> { 0 1 2 3 <Ref> { front_vertices } }
+    }
+  }
+
+  <Group> back_face {
+    <Polygon> {
+      <TRef> { card_back_texture }
+      <VertexRef> { 0 1 2 3 <Ref> { back_vertices } }
+    }
+  }
+}

@@ -13,6 +13,8 @@ import java.util.Objects;
 public abstract class Player {
     private final String name;
     private final List<Card> hand = new ArrayList<>();
+    private final List<Card> capturedCards = new ArrayList<>();
+    private int scopaCount = 0;
 
     protected Player(String name) {
         this.name = Objects.requireNonNull(name, "name");
@@ -30,9 +32,35 @@ public abstract class Player {
         hand.addAll(cards);
     }
 
-    //public void playCard()
+    public Card removeFromHand(int index) {
+        if (index < 0 || index >= hand.size()) {
+            throw new IllegalArgumentException("Invalid hand index: " + index);
+        }
+        return hand.remove(index);
+    }
+
+    public void addCapturedCards(List<Card> cards) {
+        capturedCards.addAll(cards);
+    }
+
+    public List<Card> getCapturedCards() {
+        return Collections.unmodifiableList(capturedCards);
+    }
+
+    public void incrementScopa() {
+        scopaCount++;
+    }
+
+    public int getScopaCount() {
+        return scopaCount;
+    }
 
     public void clearHand() {
         hand.clear();
+    }
+
+    public void clearCaptured() {
+        capturedCards.clear();
+        scopaCount = 0;
     }
 }
