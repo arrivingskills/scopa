@@ -70,4 +70,12 @@ public class ScopaRulesTest {
             assertEquals(7, sum(combo), "Every capture candidate must sum to the played card's value");
         }
     }
+
+    @Test
+    public void whoTakesLast(){
+        boolean p1_takes = ;
+        
+
+
+    }
 }
